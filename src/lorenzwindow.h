@@ -1,0 +1,134 @@
+#ifndef LORENZWINDOW_H
+#define LORENZWINDOW_H
+
+#include <node/text.h>
+
+#include <GUI/guiwindow.h>
+#include <lorenzscenemaster.h>
+#include <fixedlorenzrenderable.h>
+#include <scene/scenecontroller.h>
+
+class LorenzWindow : public GuiWindow
+{
+  public:
+      LorenzWindow
+  (
+    const std::string &title       = titleDefault,
+    const int          width       = widthDefault,
+    const int          height      = heightDefault,
+    const int          x           = xDefault,
+    const int          y           = yDefault,
+    const unsigned int displayMode = displayModeDefault
+  );
+    virtual ~LorenzWindow();
+
+    void OnOpen() ;
+
+    void OnDisplay() ;
+    void OnTick() ;
+    void OnMotion(int x, int y) ;
+    void OnKeyboard(unsigned char key, int x, int y) ;
+    void OnKeyboardUp(unsigned char key, int x, int y) ;
+    void OnMenu(int val) ;
+
+  private:
+
+    bool _pause ;
+    double _C ;
+
+    const static int _n_mode  = 3 ,
+                     _n_scene = 4 ;
+    int _mode, _scene;
+    const char _mode_arr[_n_mode] = {  P_T      ,
+                                       P_ACTUAL ,
+                                       P_LAG    } ;
+    LorenzSceneMaster _scene_arr[_n_scene] ;
+    const std::string _mode_name_arr[_n_mode] = {  "No Lorenz"           ,
+                                                   "Lorenz to t'=0"      ,
+                                                   "Lorenz to x'=ct'"    } ;
+    const std::string _scene_name_arr[_n_scene] = {  "Light Clock"          ,
+                                                    "Length Contraction"   ,
+                                                    "Moving object Passby" ,
+                                                    "Sandbox"              } ;
+
+
+    SceneController _controller ;
+
+    render_p _moving_clock, _fix_clock,
+             _moving_l    , _fix_l    ,
+             _train       , _platform ,
+             _moving_sand , _sandbox  ;
+
+    camera_p _fixed_cam, _moving_cam ;
+
+    std::shared_ptr<GuiScene> _view, _viewer ;
+    std::shared_ptr<GuiLabel> _mode_lab, _c_lab ,_scene_lab;
+    std::shared_ptr<GuiSlider<double>> _c_slide;
+    std::shared_ptr<GuiSlider<int>> _t_slide ;
+
+    GltTextOverlay _help, _credits ;
+    int _overlay ;
+
+    const std::string _help_text =
+    "-Controls : \n"
+    " 'w' \ 's'    -->  Go Forward / Backward \n"
+    " 'a' \ 'd'    -->  Go Left / Right \n"
+    " 'q' \ SPACE  -->  Go Up / Down \n"
+    " 'z'         -->  Stop \n"
+    " 'p'         -->  (Un)Pause \n"
+    " 't'         -->  Teleport at (0,0,0) \n"
+    " TAB         -->  Change render Mode\n"
+    " ESC         -->  Close Overlay\n"
+    " Mouse pan   -->  See around\n"
+    "\n"
+    "\n"
+    "-This is a graphical simulation on how you'd see or measure objects\n"
+    " according to Special Relativity with C (the speed of light) set to give \n"
+    " more appreciable effect. \n"
+    "-The black slider controls the magnitude of C\n"
+    "-The left screen display the first observer POV and is at your control\n"
+    "-The right screen display the second observer POV who is still relative to the\n"
+    " background \"Spacetime ripple\"\n"
+    "-As the simulation is paused any movement changes instead your velocity\n"
+    "-Whith right click you can navigate through different scenes\n"
+    "\n"
+    "You can render objects in 3 different mode:\n"
+    "-\"No lorenz\" with no transformation at all (C = inf)\n"
+    "-\"t'=0\" in which you see what the moving observer would \n"
+    " measure to be its actual present\n"
+    "-\"t'=ct\" in which tou see what the moving observer\n"
+    "would actually see accounting for non-0 light propagation time\n"
+    "\n"
+    "Feel free to explore\n" ;
+
+    const std::string _credits_text =
+    "Lorenz tranform viewer\n"
+    "by\n"
+    "Emilio Annoni \n"
+    "\n"
+    "emilio.annoni@studenti.unimi.it \n"
+    "Universita' degli studi Milano \\ Fisica\n"
+    "TNDS A.A 2019/2020 \n"
+    "\n"
+    "All rights (maybe) reserved" ;
+
+    enum _menu_items
+    {
+      SCENE_CLOCK       = 0,
+      SCENE_CONTRACTION = 1,
+      SCENE_PASSBY      = 2,
+      SCENE_SANDBOX     = 3,
+      HELP                 ,
+      CREDITS
+    };
+
+    enum _overlay_items
+    {
+      NONE,
+      OVER_HELP,
+      OVER_CREDITS
+    };
+
+};
+
+#endif // LORENZWINDOW_H

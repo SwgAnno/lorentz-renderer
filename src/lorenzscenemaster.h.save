@@ -1,0 +1,63 @@
+#ifndef LORENZSCENEMASTER_H
+#define LORENZSCENEMASTER_H
+
+#define N_MATS 6
+
+#include <list>
+
+#include <scene/scenemaster.h>
+#include <lorenzrenderable.h>
+
+const char SCENE_RENDER = 0x01 ;
+const char SCENE_MOVE   = 0x02 ;
+const char SCENE_FIX    = 0x04 ;
+
+typedef std::shared_ptr<LorenzRenderable> render_p ;
+
+class LorenzSceneMaster : public SceneMaster
+{
+
+  public:
+    LorenzSceneMaster( const char& mode = P_T , float limit = 10.f);
+    virtual ~LorenzSceneMaster();
+
+    void render( camera_p ) ;
+    void init() ;
+    void update() ;
+    void setup() ;
+    void add(render_p, const char&) ;
+
+    float gamma_i() { return _gamma_i ;} ;
+    float& c() { return C ;} ;
+    float& limit() { return box_l ;} ;
+    void OnTick() ;
+
+    char& mode(){ return _mode; } ;
+
+  protected:
+
+    void vCheck(    std::shared_ptr<SceneObservable>) ;
+    void collCheck( std::shared_ptr<SceneObservable>) ;
+    void collCheck( std::shared_ptr<LorenzRenderable>) ;
+
+    char _mode ;
+    float _gamma_i, C ;
+    float box_l ;
+
+    std::list<render_p> _objs ;
+
+    Matrix _view_mat, _v_orient, _v_orient_i, _lorenz , _lorenz_fix ;
+
+  private:
+
+    //object coloring without implementing vertex color workaround
+    const GltMaterial _mats[N_MATS] = {  GltMaterial("jade",GL_FRONT),
+                                         GltMaterial("ruby",GL_FRONT),
+                                         GltMaterial("turquoise",GL_FRONT),
+                                         GltMaterial("pearl",GL_FRONT),
+                                         GltMaterial("silver",GL_FRONT),
+                                         GltMaterial("gold",GL_FRONT),
+                                       } ;
+};
+
+#endif // LORENZSCENEMASTER_H

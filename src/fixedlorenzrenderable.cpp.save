@@ -1,0 +1,32 @@
+#include "fixedlorenzrenderable.h"
+
+FixedLorenzRenderable::FixedLorenzRenderable( const std::string& src ,
+                                              const float& i_x     ,
+                                              const float& i_y     ,
+                                              const float& i_z     ,
+                                              const float& i_phi   ,
+                                              const float& i_theta ) :
+  LorenzRenderable( src, i_x, i_y, i_z, i_phi, i_theta)
+{
+  _render_vert = _src_vert ;
+
+  
+  for(int i=0;i< _n_vert; i++)
+  {
+    _render_vert[3*i]
+  }
+}
+
+FixedLorenzRenderable::~FixedLorenzRenderable()
+{
+  //dtor
+}
+
+int FixedLorenzRenderable::timeSet(const char& mode  ,
+                                   const Matrix& translate,
+                                   const Vector3& v_proj  ,
+                                   const float& v ,
+                                   const float& C )
+{
+
+}

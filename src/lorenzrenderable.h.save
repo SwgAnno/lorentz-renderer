@@ -1,0 +1,116 @@
+
+//general triangle-based moving graphic entity affected by Lorenz transform
+
+//due to the linearity of "present to present" time lorenz tranform
+//as long as the object does not rotate the history of absolute position only has to be stored
+
+//loaded from .obj 3D object format file
+
+ #ifndef LORENZRENDERABLE_H
+#define LORENZRENDERABLE_H
+
+#define MOV_CACHE_SIZE 256
+
+//no clue on how to get reliably max number of thread for a machine
+#define MAX_SETTER_THREAD 256
+
+#include <fstream>
+#include <regex>
+
+#include <boost/thread/thread.hpp>
+#include <boost>
+
+#include <scene/scenerenderable.h>
+
+
+//lorenz renderable timeset mode
+const char P_ACTUAL = 0x00 ;
+const char P_LAG    = 0x01 ;
+const char P_T      = 0x02 ;
+
+
+class LorenzRenderable : public SceneRenderable
+{
+  public:
+    LorenzRenderable( const std::string&     src ,
+                      const float& i_x     = 0.f ,
+                      const float& i_y     = 0.f ,
+                      const float& i_z     = 0.f ,
+                      const float& i_phi   = 0.f ,
+                      const float& i_theta = 0.f ) ;
+    virtual ~LorenzRenderable();
+
+    void move() ;
+    void record() ;
+    int timeSet( const char&   ,
+                 const Matrix& ,
+                 const Vector3&,
+                 const float&  ,
+                 const float&  ) ;
+    void render() ;
+
+    Matrix& model_mat() ;
+
+  protected:
+
+  //timeSet call for single vertex, this task can be executed in parallel
+
+  //lorentz transform to t'=0
+    int timeSet_actual( int n,
+                 const Matrix&,
+                 const Vector3&,
+                 const float&,
+                 const float&,
+                 const float&,
+                 const float&,
+                 const float&  ) ;
+  //lorenz transform considering light propoagation time
+    int timeSet_lag( int n,
+                 const Matrix&,
+                 const Vector3&,
+                 const float&,
+                 const float&,
+                 const float&,
+                 const float&,
+                 const float&  ) ;
+  //display selected pos in history buffer
+    int timeSet_t( int n,
+                 const int&   ) ;
+
+    Vector3 vertPosAtT( const Matrix&, const int&, const int& ) ;
+    float   vertDelay( const float&, const float&, const Vector3&, const Vector3& ) ;
+    float   vertT( const int&, const int& ) ;
+
+    Vector3 _pos_hist[MOV_CACHE_SIZE] ,
+            _v_hist[MOV_CACHE_SIZE]   ;
+    int _now ; //history array pointer
+
+    float time_k[MOV_CACHE_SIZE] ;
+    // used in per-vertex time displacement calculation
+    // t_i = time_k[i] * x_i
+
+    // .obj-like rendering infos
+    float* _src_vert;
+    float* _render_vert ;
+    int _n_vert ;
+    float* _norm ;
+    int _n_norm ;
+    unsigned short* _ele ;
+    int _n_ele ;
+
+  private:
+
+    int load( std::ifstream& ) ;
+
+    // .obj file regex
+    const std::string float_s = "-?\\d+\\.?\\d*" ;
+    const std::string  vex = "v *("+float_s+") *("+float_s+") *("+float_s+")" ;
+    const std::string  vn = "vn *("+float_s+") *("+float_s+") *("+float_s+")" ;
+    const std::string  face = "f *(\\d+)/(\\d+)?/(\\d+)? *"
+                                "(\\d+)/(\\d+)?/(\\d+)? *"
+                                "(\\d+)/(\\d+)?/(\\d+)?" ;
+
+    std::regex vex_regex, vn_regex, face_regex ;
+};
+
+#endif // LORENZRENDERABLE_H

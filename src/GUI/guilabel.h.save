@@ -1,0 +1,34 @@
+#ifndef GUILABEL_H
+#define GUILABEL_H
+
+#include <string>
+
+#include <fonts/fonts.h>
+#include <glt/fontasci.h>
+#include <node/text.h>
+
+#include <GUI/component.h>
+
+class GuiLabel : public GuiComponent
+{
+  public:
+    GuiLabel(const std::string&, const GltFontAscii& );
+//    GuiLabel(const GuiLabel&, GuiComponent*) ;
+    virtual ~GuiLabel();
+
+    std::string& msg() {return _msg ;} ;
+
+    void draw();
+
+    void   set_msg(std::string n_msg){ _msg = n}
+    string get_msg(){ return _msg;} ;
+
+  protected:
+
+  std::string _msg ;
+  const GltFontAscii&  _font;
+
+  private:
+};
+
+#endif // GUILABEL_H

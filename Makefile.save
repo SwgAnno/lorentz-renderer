@@ -1,0 +1,72 @@
+###########
+
+DEBUG = -DDEBUG
+
+GLTROOT = C:\Users\utente\Desktop\Pappa_01\Dev\C++\Libraries\glt
+GLTINCS = $(GLTROOT)/src
+GLTLIBS = $(GLTROOT)/lib
+GLT.inc = -I$(GLTINCS)
+GLT.lib = -L$(GLTLIBS) -lglutm -lglt -lz -ljpeg -lpng  -lglut32 -lglut -lglu32 -lwinmm -lgdi32 -lopengl32
+
+BOOSTROOT = C:\Users\utente\Desktop\Pappa_01\Dev\C++\Libraries\boost_1_70_0
+BOOSTINCS = $(BOOSTROOT)
+BOOSTLIBS = $(BOOSTROOT)\stage\lib
+BOOST.inc = -I$(BOOSTINCS)
+BOOST.lib = -L$(BOOSTLIBS) $(lsys.boost) $(lthread.boost)
+
+lsys.boost = -lboost_system-mgw82-mt-d-x32-1_70
+lthread.boost = -lboost_thread-mgw82-mt-d-x32-1_70
+
+
+my.cc = g++ -c -std=c++11 -o $@ $(GLT.inc) $(BOOST.inc) -Isrc $<
+Debug : override my.cc += $(DEBUG)
+my.link = g++ -o $@ $+ $(GLT.lib) $(BOOST.lib)
+
+OBJDIR = obj
+
+GUIDIR = src/GUI
+TARGET_GUI = component guiwindow guipanel guilabel guiscene
+
+TARGET_SCENE = sceneobservable scenerenderable movingobserver
+
+TARGET_MAIN = main lorenzwindow lorenzobserver
+
+TARGET_ALL = $(patsubst %,obj/%.o , $(TARGET_MAIN))    \
+             $(patsubst %,obj/GUI/%.o , $(TARGET_GUI)) \
+             $(patsubst %,obj/scene/%.o , $(TARGET_SCENE))
+
+.PHONY : Debug Release run clean
+
+bin/main : $(TARGET_ALL) ; $(my.link)
+
+obj : $(TARGET_ALL)
+objgui : $(TARGET_GUI : % = $(OBJDIR)/%.o)
+objmain: $(TARGET_MAIN: % = $(OBJDIR)/%.o)
+
+Debug : bin/main
+
+Release : bin/main
+
+clean : ; \
+  rm $(wildcard obj/*.o) \
+	rm $(wildcard obj/scene/*.o) \  
+  rm $(wildcard obj/GUI/*.o)
+
+run : ; \
+  bin\main.exe
+
+obj/GUI/%.o : src/GUI%.cpp \
+              $(patsubst %,src/GUI/%.cpp , $(TARGET_GUI)) \
+              $(patsubst %,src/GUI/%.h , $(TARGET_GUI)) ; \
+  $(my.cc)
+
+obj/scene/%.o : src/scene%.cpp \
+                $(patsubst %,src/scene/%.cpp , $(TARGET_SCENE)) \
+								$(patsubst %,src/scene/%.h , $(TARGET_SCENE)) ; \
+  $(my.cc)
+
+obj/%.o : src/%.cpp src/%.h ; \
+  $(my.cc)
+
+obj/%.o : src/%.cpp; \
+  $(my.cc)

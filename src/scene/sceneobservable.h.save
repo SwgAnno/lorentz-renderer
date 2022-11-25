@@ -1,0 +1,48 @@
+#ifndef SCENEOBSERVABLE_H
+#define SCENEOBSERVABLE_H
+
+#define DT 0.
+
+#include <cmath>
+#include <iostream>
+#include <boost/thread/mutex.hpp>
+
+#include <glt/gl.h>
+#include <glt/error.h>
+#include <math/matrix4.h>
+#include <math/vector3.h>
+#include <math/vector2.h>
+
+
+static const double DEG2RAD = M_PI / 180 ;
+static const double RAD2DEG = 180  / M_PI ;
+
+class SceneObservable
+{
+  public:
+    SceneObservable( const float& i_x     = 0.f ,
+                     const float& i_y     = 0.f ,
+                     const float& i_z     = 0.f ,
+                     const float& i_phi   = 0.f ,
+                     const float& i_theta = 0.f ) ;
+
+    Vector3& pos() { return _pos   ; } ;
+    Vector3& v()   { return _v     ; } ;
+    Vector3& a()   { return _a     ; } ;
+    float& phi()   { return _phi   ; } ;
+    float& theta() { return _theta ; } ;
+
+    virtual void move();
+
+  protected:
+
+    Vector3 _pos, _v , _a;
+    float _phi ,_theta ; // elevation , azimuth
+
+    boost::mutex _update_mtx ;
+
+
+  private:
+};
+
+#endif // SCENEOBSERVABLE_H

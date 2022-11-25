@@ -1,0 +1,24 @@
+#include "scenerenderable.h"
+
+SceneRenderable::SceneRenderable( const float& i_x     ,
+                                  const float& i_y     ,
+                                  const float& i_z     ,
+                                  const float& i_phi   ,
+                                  const float& i_theta ) :
+  SceneObservable( i_x, i_y, i_z, i_phi, i_theta)
+{
+
+}
+
+
+SceneRenderable::~SceneRenderable()
+{
+  //dtor
+}
+
+Matrix& model_mat()
+{
+  model_mat = matrixTranslate(_pos) * matrixRotate()
+
+  return _model_mat
+}

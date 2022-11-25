@@ -1,0 +1,354 @@
+#include "lorenzwindow.h"
+
+LorenzWindow::LorenzWindow(const std::string &title,
+                           const int width, const int height,
+                           const int x, const int y,
+                           const unsigned int displayMode)
+                    :
+  GuiWindow(title, width, height, x, y, displayMode),
+  _pause(false), _C(50),
+  _mode(0) , _scene(0),
+  _help( _font, _viewport),
+  _credits( _font, _viewport),
+  _overlay(OVER_HELP)
+{
+//////////////////////////////////////
+//Light clock scene
+
+  _scene_arr[SCENE_CLOCK].limit() = 5.f;
+
+  render_p  space( new FixedLorenzRenderable("src/Model/spacetime.obj", 0.f, -20.f, 0.f)) ;
+  render_p  up( new FixedLorenzRenderable("src/Model/wall.obj", 0.f, 5.f, 0.f, M_PI/2, 0.f)) ;
+  render_p  down( new FixedLorenzRenderable("src/Model/wall.obj", 0.f, -5.f, 0.f, M_PI/2, 0.f)) ;
+
+  render_p  photon( new LorenzRenderable("src/Model/otta1.obj", 0.f, 0.f, 0.f )) ;
+  photon->v() = Vector3( 0, 10, 0) ;
+
+  _scene_arr[SCENE_CLOCK].add( space, SCENE_RENDER | SCENE_FIX) ;
+  _scene_arr[SCENE_CLOCK].add( up, SCENE_RENDER | SCENE_FIX) ;
+  _scene_arr[SCENE_CLOCK].add( down, SCENE_RENDER | SCENE_FIX) ;
+  _scene_arr[SCENE_CLOCK].add( photon, SCENE_RENDER | SCENE_MOVE) ;
+
+  //initialize two camera as objects
+  _fix_clock = std::make_shared<FixedLorenzRenderable>("src/Model/observer.obj", -5.f, 5.f, 5.f, -.4f, .4f) ;
+  _scene_arr[SCENE_CLOCK].add( _fix_clock, SCENE_RENDER | SCENE_FIX) ;
+
+  _moving_clock = std::make_shared<LorenzRenderable>("src/Model/observer.obj", 7.f, -7.f, -7.f, .4f, .4f + M_PI) ;
+  _scene_arr[SCENE_CLOCK].add( _moving_clock , SCENE_RENDER ) ;
+
+  _scene_arr[SCENE_CLOCK].c() = _C ;
+  _scene_arr[SCENE_CLOCK].init() ;
+
+
+///////////////////////////////////////////////////////////
+//Contraction scene
+
+  render_p  utah( new FixedLorenzRenderable("src/Model/utah.obj", 0.f, 0.f, 0.f,-.7f, .7f)) ;
+
+  render_p  otta( new LorenzRenderable("src/Model/otta1.obj", 0.f, 0.f, 0.f)) ;
+  otta->v() = Vector3( 2, 3, 4) ;
+
+  _scene_arr[SCENE_CONTRACTION].add( space, SCENE_RENDER | SCENE_FIX) ;
+  _scene_arr[SCENE_CONTRACTION].add( utah, SCENE_RENDER | SCENE_FIX) ;
+  _scene_arr[SCENE_CONTRACTION].add( otta, SCENE_RENDER | SCENE_MOVE) ;
+
+  _moving_l = std::make_shared<LorenzRenderable>("src/Model/observer.obj", 0.f, 0.f, 4.f) ;
+  _scene_arr[SCENE_CONTRACTION].add( _moving_l, SCENE_RENDER ) ;
+
+  _fix_l = std::make_shared<FixedLorenzRenderable>("src/Model/observer.obj", -10.f, 10.f, 10.f, -.7f, .7f ) ;
+  _scene_arr[SCENE_CONTRACTION].add( _fix_l , SCENE_RENDER | SCENE_FIX) ;
+
+  _scene_arr[SCENE_CONTRACTION].c() = _C ;
+  _scene_arr[SCENE_CONTRACTION].init() ;
+
+///////////////////////////////////////////////////////////
+//Passby scene
+
+
+  render_p  busstop( new FixedLorenzRenderable("src/Model/busstop.obj", 0.f, 0.f, 0.f, 0.f, -M_PI/2)) ;
+
+  _scene_arr[SCENE_PASSBY].add( space, SCENE_RENDER | SCENE_FIX) ;
+  _scene_arr[SCENE_PASSBY].add( busstop, SCENE_RENDER | SCENE_FIX) ;
+
+  _train = std::make_shared<LorenzRenderable>("src/Model/bus.obj", -2.f, 1.f, 20.f) ;
+  _scene_arr[SCENE_PASSBY].add( _train, SCENE_RENDER ) ;
+
+  _platform = std::make_shared<FixedLorenzRenderable>("src/Model/observer.obj", 1.f, 1.5f, .5f , 0.f, -5.f/6.f * M_PI ) ;
+  _scene_arr[SCENE_PASSBY].add( _platform , SCENE_RENDER | SCENE_FIX) ;
+
+  _scene_arr[SCENE_PASSBY].c() = _C ;
+  _scene_arr[SCENE_PASSBY].init() ;
+
+///////////////////////////////////////////////////////////
+//Sandbox scene
+
+  render_p  base( new FixedLorenzRenderable("src/Model/wall.obj", 0.f, -10.f, 0.f, M_PI/2, 0.f)) ;
+  render_p  left( new FixedLorenzRenderable("src/Model/wall.obj", -2.f, 0.f, 0.f, 0.f, M_PI/2)) ;
+  render_p  right( new FixedLorenzRenderable("src/Model/wall.obj", 2.f, 0.f, 0.f, 0.f, M_PI/2)) ;
+
+  _scene_arr[SCENE_SANDBOX].add( utah , SCENE_RENDER | SCENE_FIX ) ;
+  _scene_arr[SCENE_SANDBOX].add( space, SCENE_RENDER | SCENE_FIX) ;
+  _scene_arr[SCENE_SANDBOX].add( base , SCENE_RENDER | SCENE_FIX) ;
+  _scene_arr[SCENE_SANDBOX].add( left , SCENE_RENDER | SCENE_FIX) ;
+  _scene_arr[SCENE_SANDBOX].add( right , SCENE_RENDER | SCENE_FIX) ;
+
+  //initialize two camera as objects
+  _moving_sand = std::make_shared<LorenzRenderable>("src/Model/observer.obj", 0.f, 0.f, -4.f) ;
+  _scene_arr[SCENE_SANDBOX].add( _moving_sand, SCENE_RENDER ) ;
+
+  _sandbox = std::make_shared<FixedLorenzRenderable>("src/Model/observer.obj", -10.f, 10.f, 10.f, -.7f, .7f ) ;
+  _scene_arr[SCENE_SANDBOX].add( _sandbox , SCENE_RENDER | SCENE_FIX) ;
+
+  render_p test1(  new LorenzRenderable("src/Model/cube1.obj", -7.f, 0.f, 0.f)) ;
+  test1->v() = Vector3( 7, 0, 0) ;
+  _scene_arr[SCENE_SANDBOX].add( test1 , SCENE_RENDER | SCENE_MOVE )  ;
+
+  _scene_arr[SCENE_SANDBOX].c() = _C ;
+  _scene_arr[SCENE_SANDBOX].init() ;
+
+/////////////////////////////////////////////////
+
+
+  _fixed_cam  = camera_p( new SceneCamera( _fix_clock    )) ;
+  _moving_cam = camera_p( new SceneCamera( _moving_clock )) ;
+
+  _controller.obj() = _moving_cam->pov()  ;
+
+  _help.color() = white;
+  _help.fadeColor() = blue;
+  _help.border() = true;
+  _help.borderColor() = white;
+  _help.spacing() = 15;
+  _help.alignHorizontal() = GLT_ALIGN_HCENTER ;
+  _help.alignVertical()   = GLT_ALIGN_VCENTER ;
+  _help.text() =  _help_text ;
+
+  _credits.color() = white;
+  _credits.fadeColor() = blue;
+  _credits.border() = true;
+  _credits.borderColor() = white;
+  _credits.spacing() = 15;
+  _credits.alignHorizontal() = GLT_ALIGN_HCENTER ;
+  _credits.alignVertical()   = GLT_ALIGN_VCENTER ;
+  _credits.text() = _credits_text ;
+
+}
+
+
+LorenzWindow::~LorenzWindow()
+{
+
+}
+
+void LorenzWindow::OnOpen()
+{
+
+  _clear.set(black);
+
+  glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity();
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+
+  glDisable(GL_LIGHTING) ;
+
+  _font.init(courier14Font) ;
+
+  float h_div[3]  = {8.f/10, 1.f/10, 1.f/10} ;
+  float h_div2[2] = {2.f/10, 8.f/10 } ;
+  gui_p h_box( new GuiPanel(false , 3 , h_div )) ;
+
+  gui_p x_box ( new GuiPanel(true , 5)) ;
+  gui_p x_box2( new GuiPanel(true , 2, h_div2)) ;
+
+  _mode_lab  = std::make_shared<GuiLabel>( "Mode: "  + _mode_name_arr[_mode], _font ) ;
+  _scene_lab = std::make_shared<GuiLabel>( "Scene: " + _scene_name_arr[_scene]  , _font ) ;
+  gui_p lab3( new GuiLabel("bip", _font )) ;
+  gui_p lab4( new GuiLabel("Press right button for help", _font )) ;
+
+  // https://stackoverflow.com/questions/13403490/passing-shared-ptrderived-as-shared-ptrbase
+  x_box->add( std::dynamic_pointer_cast<GuiComponent,GuiLabel>(_mode_lab), 0) ;
+  x_box->add( std::dynamic_pointer_cast<GuiComponent,GuiLabel>(_scene_lab),2) ;
+  x_box->add(lab4,3) ;
+
+  h_box->add(x_box,2) ;
+
+  _c_lab     = std::make_shared<GuiLabel>( "C: "     +std::to_string(_C)   , _font ) ;
+  _c_slide = std::make_shared<GuiSlider<double>>( .5f, 50.f ) ;
+
+  x_box2->add( std::dynamic_pointer_cast<GuiComponent,GuiLabel>(_c_lab), 0) ;
+  x_box2->add( std::dynamic_pointer_cast<GuiComponent,GuiSlider<double>>(_c_slide), 1) ;
+
+  h_box->add(x_box2,1) ;
+
+  gui_p x_box3( new GuiPanel(true , 2)) ;
+
+  _viewer = std::make_shared<GuiScene>( &_scene_arr[_scene] , _moving_cam) ;
+  _viewer->setFocus(true) ;
+  x_box3->add(_viewer,0) ;
+
+  _view = std::make_shared<GuiScene>( &_scene_arr[_scene] ,  _fixed_cam) ;
+  x_box3->add( _view ,1) ;
+
+  h_box->add(x_box3,0) ;
+
+  _root.add(h_box) ;
+
+  GlutMenu &mode = _rightButtonMenu.subMenu();
+    mode.addEntry( "Light Clock",          SCENE_CLOCK) ;
+    mode.addEntry( "Length contraction",   SCENE_CONTRACTION) ;
+    mode.addEntry( "Moving object passby", SCENE_PASSBY) ;
+    mode.addEntry( "Sandbox"             , SCENE_SANDBOX) ;
+
+  _rightButtonMenu.addEntry( "Scene" , mode) ;
+  _rightButtonMenu.addEntry( "Help" , HELP) ;
+  _rightButtonMenu.addEntry( "Credits" , CREDITS) ;
+
+  _rightButtonMenu.attach();
+
+  setTick(1000/60) ;
+  // 60FPS as in GLT documentation example
+  // "examiner/main.cpp"
+
+  std::cerr << "LorenzWindow opened" << std::endl ;
+}
+
+void LorenzWindow::OnDisplay()
+{
+  GuiWindow::OnDisplay() ;
+
+  switch( _overlay)
+  {
+  case OVER_CREDITS :
+    _credits.draw() ;
+    break;
+
+  case OVER_HELP  :
+    _help.draw() ;
+    break ;
+  }
+}
+
+void LorenzWindow::OnTick()
+{
+  _scene_arr[_scene].setup() ;
+
+  _controller.OnTick() ;
+
+  if( !_pause )
+    _scene_arr[_scene].update() ;
+
+  GuiWindow::OnTick() ;
+}
+
+void LorenzWindow::OnMotion( int x, int y)
+{
+  GuiWindow::OnMotion( x, y) ;
+  float dx = static_cast<float>(_mouse[2])/ _root.px_w() * M_PI,
+        dy = static_cast<float>(_mouse[3])/ _root.px_h() * M_PI;
+
+
+  if(_viewer->focus())
+    _controller.OnMotion( dx, dy) ;
+
+  _scene_arr[_scene].c()  = _c_slide->value() ;
+  _c_lab->msg() = "C: " + std::to_string(_c_slide->value()) ;
+}
+
+void LorenzWindow::OnKeyboard(unsigned char key, int x, int y)
+{
+#ifdef KEY_DEBUG
+  std::cerr << (int)key << " down\n";
+#endif // KEY_DEBUG
+
+  _controller.OnKeyboard(key, x, y) ;
+  GuiWindow::OnKeyboard(key, x, y) ;
+}
+
+void LorenzWindow::OnKeyboardUp(unsigned char key, int x, int y)
+{
+
+#ifdef KEY_DEBUG
+  std::cerr << (int)key << " up\n" ;
+#endif // KEY_DEBUG
+
+  _controller.OnKeyboard(key, x, y) ;
+  GuiWindow::OnKeyboard(key, x, y) ;
+  switch( key )
+  {
+  case 27 : //esc
+    _overlay = NONE ;
+    break ;
+  case 'p' :
+    _pause = !_pause ;
+    break ;
+
+  case 't' :
+    _moving_cam->pov()->pos() = Vector3(0,0,0) ;
+
+  case '\t' :
+    _mode = (_mode+1)%_n_mode ;
+
+    _scene_arr[_scene].mode()   = _mode_arr[_mode] ;
+    _mode_lab->msg() = "Mode: " + _mode_name_arr[_mode] ;
+
+    break ;
+  }
+
+  _controller.OnKeyboardUp(key, x, y) ;
+  GuiWindow::OnKeyboardUp(key, x, y) ;
+}
+
+void LorenzWindow::OnMenu( int val)
+{
+  switch( val )
+  {
+  case SCENE_CLOCK :
+    _scene = SCENE_CLOCK ;
+
+    _moving_cam ->pov() = _moving_clock ;
+    _fixed_cam->pov()   = _fix_clock    ;
+
+    break ;
+
+  case SCENE_CONTRACTION :
+    _scene = SCENE_CONTRACTION ;
+
+    _moving_cam ->pov() = _moving_l ;
+    _fixed_cam->pov()   = _fix_l    ;
+    break ;
+
+  case SCENE_PASSBY :
+    _scene = SCENE_PASSBY ;
+
+    _moving_cam ->pov() = _train    ;
+    _fixed_cam->pov()   = _platform ;
+    break ;
+
+  case SCENE_SANDBOX :
+    _scene = SCENE_SANDBOX ;
+
+    _moving_cam ->pov() = _moving_sand ;
+    _fixed_cam->pov()   = _sandbox     ;
+    break ;
+
+  case HELP :
+    _overlay = OVER_HELP ;
+    break ;
+
+  case CREDITS :
+    _overlay = OVER_CREDITS ;
+    break ;
+
+  }
+
+  _viewer->setScene( &_scene_arr[_scene], _moving_cam) ;
+  _view  ->setScene( &_scene_arr[_scene], _fixed_cam) ;
+
+  _controller.obj() = _moving_cam->pov() ;
+
+  _scene_arr[_scene].c()      = _c_slide->value() ;
+  _scene_arr[_scene].mode()   = _mode_arr[_mode] ;
+
+  _scene_lab->msg() = "Scene: " + _scene_name_arr[_scene] ;
+}
